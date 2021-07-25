@@ -4,8 +4,11 @@ const schedule = require('node-schedule')
 const request = require('request')
 const ip = require('ip')
 const http = require('http')
+var FakeGatoHistoryService;
 
 module.exports = function (homebridge) {
+  FakeGatoHistoryService = require("fakegato-history")(homebridge);
+
   Service = homebridge.hap.Service
   Characteristic = homebridge.hap.Characteristic
   homebridge.registerAccessory('homebridge-web-sprinklers-history', 'WebSprinklersHistory', WebSprinklers)
@@ -14,10 +17,15 @@ module.exports = function (homebridge) {
 function WebSprinklers (log, config) {
   this.log = log
 
+  this.loggingService = new FakeGatoHistoryService("aqua", this, {
+    storage: "fs",
+  });
+
   this.name = config.name
   this.apiroute = config.apiroute
   this.zones = config.zones || 6
   this.pollInterval = config.pollInterval || 300
+  this.flowRate = config.flowRate || 1;
 
   this.listener = config.listener || false
   this.port = config.port || 2000
@@ -122,12 +130,21 @@ WebSprinklers.prototype = {
         this.log.debug('Device response: %s', responseBody)
         var json = JSON.parse(responseBody)
 
+        var isWatering = false;
+        var flowRate = 0;
         for (var zone = 1; zone <= this.zones; zone++) {
           var value = json[zone - 1].state
+          isWatering |= value;
+          if(value)
+          {
+            flowRate += this.flowRate;
+          }
           this.log.debug('Zone %s | Updated state to: %s', zone, value)
           this.valveAccessory[zone].getCharacteristic(Characteristic.Active).updateValue(value)
           this.valveAccessory[zone].getCharacteristic(Characteristic.InUse).updateValue(value)
         }
+        this.LoggingService.addEntry({ time: Math.round(new Date().valueOf() / 1000), status: isWatering, waterAmount: flowRate });
+
         callback()
       }
     }.bind(this))
@@ -309,7 +326,9 @@ WebSprinklers.prototype = {
       .setCharacteristic(Characteristic.SerialNumber, this.serial)
       .setCharacteristic(Characteristic.FirmwareRevision, this.firmware)
 
-    var services = [this.informationService, this.service]
+    // Logging service might be weird as we only have one accessory for potenially many valves. 
+    // Elgato only supports one valve per accessory :-/ 
+    var services = [this.informationService, this.service, this.loggingService]
     for (var zone = 1; zone <= this.zones; zone++) {
       var accessory = new Service.Valve('Zone', zone)
       accessory
