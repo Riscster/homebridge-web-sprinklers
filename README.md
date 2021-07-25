@@ -4,7 +4,9 @@
 
 <span align="center">
 
-# homebridge-web-sprinklers
+# homebridge-web-sprinklers-history
+
+All the work here was done by Tomm Rodrigues - I'm just experimenting with adding some history options
 
 [![npm](https://img.shields.io/npm/v/homebridge-web-sprinklers.svg)](https://www.npmjs.com/package/homebridge-web-sprinklers) [![npm](https://img.shields.io/npm/dt/homebridge-web-sprinklers.svg)](https://www.npmjs.com/package/homebridge-web-sprinklers)
 

@@ -8,7 +8,7 @@ const http = require('http')
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service
   Characteristic = homebridge.hap.Characteristic
-  homebridge.registerAccessory('homebridge-web-sprinklers', 'WebSprinklers', WebSprinklers)
+  homebridge.registerAccessory('homebridge-web-sprinklers-history', 'WebSprinklersHistory', WebSprinklers)
 }
 
 function WebSprinklers (log, config) {
